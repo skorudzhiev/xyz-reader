@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.RecyclerView;
@@ -58,9 +59,7 @@ public class ArticleListActivity extends ActionBarActivity implements
         toolbar = (Toolbar) findViewById(R.id.toolbar);
 
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
-        swipeRefreshLayout.setProgressViewOffset(false,
-                getResources().getDimensionPixelOffset(R.dimen.refresher_offset),
-                getResources().getDimensionPixelOffset(R.dimen.refresher_offset_end));
+
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         getLoaderManager().initLoader(0, null, this);
@@ -85,6 +84,7 @@ public class ArticleListActivity extends ActionBarActivity implements
     protected void onStop() {
         super.onStop();
         unregisterReceiver(mRefreshingReceiver);
+        swipeRefreshLayout.setEnabled(false);
     }
 
     private boolean isRefreshing = false;
@@ -100,7 +100,18 @@ public class ArticleListActivity extends ActionBarActivity implements
     };
 
     private void updateRefreshingUI() {
-        swipeRefreshLayout.setRefreshing(isRefreshing);
+        swipeRefreshLayout.setProgressViewOffset(false,
+                getResources().getDimensionPixelOffset(R.dimen.refresher_offset),
+                getResources().getDimensionPixelOffset(R.dimen.refresher_offset_end));
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override public void onRefresh() {
+                new Handler().postDelayed(new Runnable() {
+                    @Override public void run() {
+                        swipeRefreshLayout.setRefreshing(isRefreshing);
+                    }
+                }, 2000);
+            }
+        });
     }
 
     @Override
@@ -125,16 +136,16 @@ public class ArticleListActivity extends ActionBarActivity implements
     }
 
     private class Adapter extends RecyclerView.Adapter<ViewHolder> {
-        private Cursor mCursor;
+        private Cursor dbCursor;
 
         public Adapter(Cursor cursor) {
-            mCursor = cursor;
+            dbCursor = cursor;
         }
 
         @Override
         public long getItemId(int position) {
-            mCursor.moveToPosition(position);
-            return mCursor.getLong(ArticleLoader.Query._ID);
+            dbCursor.moveToPosition(position);
+            return dbCursor.getLong(ArticleLoader.Query._ID);
         }
 
         @Override
@@ -153,7 +164,7 @@ public class ArticleListActivity extends ActionBarActivity implements
 
         private Date parsePublishedDate() {
             try {
-                String date = mCursor.getString(ArticleLoader.Query.PUBLISHED_DATE);
+                String date = dbCursor.getString(ArticleLoader.Query.PUBLISHED_DATE);
                 return dateFormat.parse(date);
             } catch (ParseException ex) {
                 Log.e(TAG, ex.getMessage());
@@ -164,8 +175,8 @@ public class ArticleListActivity extends ActionBarActivity implements
 
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
-            mCursor.moveToPosition(position);
-            holder.titleView.setText(mCursor.getString(ArticleLoader.Query.TITLE));
+            dbCursor.moveToPosition(position);
+            holder.titleView.setText(dbCursor.getString(ArticleLoader.Query.TITLE));
             Date publishedDate = parsePublishedDate();
             if (!publishedDate.before(START_OF_EPOCH.getTime())) {
 
@@ -175,22 +186,22 @@ public class ArticleListActivity extends ActionBarActivity implements
                                 System.currentTimeMillis(), DateUtils.HOUR_IN_MILLIS,
                                 DateUtils.FORMAT_ABBREV_ALL).toString()
                                 + "<br/>" + " by "
-                                + mCursor.getString(ArticleLoader.Query.AUTHOR)));
+                                + dbCursor.getString(ArticleLoader.Query.AUTHOR)));
             } else {
                 holder.subtitleView.setText(Html.fromHtml(
                         outputFormat.format(publishedDate)
                         + "<br/>" + " by "
-                        + mCursor.getString(ArticleLoader.Query.AUTHOR)));
+                        + dbCursor.getString(ArticleLoader.Query.AUTHOR)));
             }
             holder.thumbnailView.setImageUrl(
-                    mCursor.getString(ArticleLoader.Query.THUMB_URL),
+                    dbCursor.getString(ArticleLoader.Query.THUMB_URL),
                     ImageLoaderHelper.getInstance(ArticleListActivity.this).getImageLoader());
-            holder.thumbnailView.setAspectRatio(mCursor.getFloat(ArticleLoader.Query.ASPECT_RATIO));
+            holder.thumbnailView.setAspectRatio(dbCursor.getFloat(ArticleLoader.Query.ASPECT_RATIO));
         }
 
         @Override
         public int getItemCount() {
-            return mCursor.getCount();
+            return dbCursor.getCount();
         }
     }
 
