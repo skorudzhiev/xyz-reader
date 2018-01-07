@@ -95,7 +95,7 @@ public class ArticleListActivity extends AppCompatActivity implements
         }
 
         Snackbar snackbar = Snackbar
-                .make(findViewById(R.id.coordinator_layout), message, Snackbar.LENGTH_LONG);
+                .make(findViewById(R.id.coordinator_layout), message, Snackbar.LENGTH_SHORT);
 
         View sbView = snackbar.getView();
         TextView textView = (TextView) sbView.findViewById(android.support.design.R.id.snackbar_text);
