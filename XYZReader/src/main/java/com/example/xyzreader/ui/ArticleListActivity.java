@@ -65,7 +65,6 @@ public class ArticleListActivity extends AppCompatActivity implements
 
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
 
-
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         getLoaderManager().initLoader(0, null, this);
 
@@ -150,7 +149,7 @@ public class ArticleListActivity extends AppCompatActivity implements
                     @Override public void run() {
                         swipeRefreshLayout.setRefreshing(isRefreshing);
                     }
-                }, 1000);
+                }, 600);
             }
         });
     }
