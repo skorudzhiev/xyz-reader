@@ -26,6 +26,7 @@
 
         <activity
             android:name=".ui.ArticleDetailActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
             android:parentActivityName=".ui.ArticleListActivity">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
